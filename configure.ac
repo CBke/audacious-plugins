@@ -54,7 +54,7 @@ INPUT_PLUGINS="tonegen metronom vtx"
 OUTPUT_PLUGINS=""
 EFFECT_PLUGINS="compressor crossfade crystalizer ladspa mixer stereo_plugin voice_removal echo_plugin"
 GENERAL_PLUGINS="alarm albumart search-tool"
-VISUALIZATION_PLUGINS="blur_scope cairo-spectrum"
+VISUALIZATION_PLUGINS="blur_scope cairo-spectrum gl-spectrum"
 CONTAINER_PLUGINS="audpl m3u pls asx"
 TRANSPORT_PLUGINS="unix-io"
 
