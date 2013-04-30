@@ -40,7 +40,7 @@
 #include <GL/glx.h>
 #include <gdk/gdkx.h>
 
-#define NUM_BANDS 42
+#define NUM_BANDS 24
 
 GLXContext context;
 
@@ -49,8 +49,8 @@ static gfloat xscale[NUM_BANDS + 1];
 static gint width, height;
 static gint pos = 0;
 
-static GLfloat bar_innerwidth =  0.8f * 3.2f / (gfloat)NUM_BANDS;
-static GLfloat bar_width = 3.2f / NUM_BANDS;
+static GLfloat bar_innerwidth =  0.8f * 3.2f / (gfloat)(NUM_BANDS - 1);
+static GLfloat bar_width = 3.2f / (NUM_BANDS - 1);
 static GLenum g_mode = GL_FILL;
 
 static GLfloat y_angle = 25.0f, y_speed = 0.058f;
@@ -70,7 +70,7 @@ void draw_rectangle (GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2,
     glVertex3f (x1, y2, z2);
     glEnd();
 
-    glColor3f (0.75f * red, 0.75f * green, 0.75f * blue);
+    glColor3f (0.65f * red, 0.65f * green, 0.65f * blue);
 
     glBegin (GL_POLYGON);
     glVertex3f (x1, y1, z1);
@@ -85,30 +85,14 @@ void draw_rectangle (GLfloat x1, GLfloat y1, GLfloat z1, GLfloat x2, GLfloat y2,
     glVertex3f (x2, y1, z2);
     glVertex3f (x2, y2, z2);
     glEnd();
-
-    glBegin (GL_POLYGON);
-    glVertex3f (x1, y1, z1);
-    glVertex3f (x2, y1, z1);
-    glVertex3f (x2, y1, z2);
-    glVertex3f (x1, y1, z2);
-    glEnd();
-
-    glColor3f (0.5f * red, 0.5f * green, 0.5f * blue);
+ 
+    glColor3f (0.8f * red, 0.8f * green, 0.8f * blue);
   
     glBegin (GL_POLYGON);
     glVertex3f (x1, y1, z1);
     glVertex3f (x2, y1, z1);
     glVertex3f (x2, y2, z1);
     glVertex3f (x1, y2, z1);
-    glEnd();
-
-    glColor3f (0.25f * red, 0.25f * green, 0.25f * blue);
-
-    glBegin (GL_POLYGON);
-      glVertex3f (x1, y1, z2);
-      glVertex3f (x1, y2, z2);
-      glVertex3f (x2, y2, z2);
-      glVertex3f (x2, y1, z2);
     glEnd();
 
 }
@@ -146,7 +130,7 @@ void draw_bars()
             x_offset = 1.6f - (gfloat)x * bar_width; 
             draw_bar (x_offset, 
                       z_offset,
-                      heights[(y + pos) % NUM_BANDS][x] * 0.04f,
+                      heights[(y + pos) % NUM_BANDS][x],
                       colors[y][x][0],
                       colors[y][x][1],
                       colors[y][x][2]);
@@ -179,7 +163,7 @@ static void render_cb (gfloat * freq)
                 n += freq[b] * (xscale[i + 1] - b);
         }
 
-	heights[pos][i] = CLAMP (15 * log10 (n * 100), 0, 40);
+	heights[pos][i] = log10 (1 + n * 50) / 2.0f;
            
     }
 
