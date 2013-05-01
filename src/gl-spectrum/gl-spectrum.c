@@ -163,7 +163,7 @@ static void render_cb (gfloat * freq)
                 n += freq[b] * (xscale[i + 1] - b);
         }
 
-	heights[pos][i] = log10 (1 + n * 50) / 2.0f;
+	heights[pos][i] = log10 (1 + n * 50);// / 2.0f;
            
     }
 
