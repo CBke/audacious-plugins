@@ -1,4 +1,6 @@
-/*
+/* OpenGL Spectrum Visualizer for Audacious
+ * Copyright (C) 2013 Christophe Budé
+ * Based on the XMMS plugin:
  * Copyright (C) 1998-2000  Peter Alm, Mikael Alm, Olle Hallnas, 
  * Thomas Nilsson and 4Front Technologies
  *
