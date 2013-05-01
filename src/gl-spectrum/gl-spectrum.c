@@ -1,5 +1,5 @@
 /*  OpenGL Spectrum Visualizer for Audacious
- *  Copyright (C) 2013 Christophe Budé
+ *  Copyright (C) 2013 Christophe Budé, John Lindgren
  *  Based on the XMMS plugin:
  *  Copyright (C) 1998-2000  Peter Alm, Mikael Alm, Olle Hallnas, 
  *  Thomas Nilsson and 4Front Technologies
@@ -40,12 +40,11 @@
 #include <GL/glx.h>
 #include <gdk/gdkx.h>
 
-#define NUM_BANDS 24
+#define NUM_BANDS 32
 
 GLXContext context;
 
 static GtkWidget * spect_widget = NULL;
-static gfloat xscale[NUM_BANDS + 1];
 static gint width, height;
 static gint pos = 0;
 
@@ -104,9 +103,9 @@ void draw_bar (GLfloat x_offset, GLfloat z_offset, GLfloat height, GLfloat red, 
                     x_offset + bar_innerwidth, 
                     height, 
                     z_offset + bar_innerwidth,
-	            red   * (0.2f + height),
-	            green * (0.2f + height),
-	            blue  * (0.2f + height));
+                    red   * (0.2f + 0.8f * height),
+                    green * (0.2f + 0.8f * height),
+                    blue  * (0.2f + 0.8f * height));
 
 }
 
@@ -130,7 +129,7 @@ void draw_bars()
             x_offset = 1.6f - (gfloat)x * bar_width; 
             draw_bar (x_offset, 
                       z_offset,
-                      heights[(y + pos) % NUM_BANDS][x],
+                      heights[(y + pos) % NUM_BANDS][x] * 1.6,
                       colors[y][x][0],
                       colors[y][x][1],
                       colors[y][x][2]);
@@ -142,30 +141,62 @@ void draw_bars()
 
 }
 
-static void render_cb (gfloat * freq)
+/* convert linear frequency graph to logarithmic one */
+/* stolen from the skins plugin */
+static void make_log_graph (const gfloat * freq, gint bands, gint db_range,
+ gfloat * graph)
 { 
+    static gint last_bands = 0;
+    static gfloat * xscale = NULL;
 
-    for (int i = 0; i < NUM_BANDS; i++)
+    /* conversion table for the x-axis */
+    if (bands != last_bands)
     {
-        gint a = ceill (xscale[i]);
-        gint b = floor (xscale[i + 1]);
-        gfloat n = 0;
+        xscale = g_realloc (xscale, sizeof (gfloat) * (bands + 1));
+        for (gint i = 0; i <= bands; i ++)
+            xscale[i] = powf (257, (gfloat) i / bands) - 1;
+
+        last_bands = bands;
+    }
+
+    for (gint i = 0; i < bands; i ++)
+    {
+        /* sum up values in freq array between xscale[i] and xscale[i + 1],
+           including fractional parts */
+        gint a = ceilf (xscale[i]);
+        gint b = floorf (xscale[i + 1]);
+        gfloat sum = 0;
 
         if (b < a)
-            n += freq[b] * (xscale[i + 1] - xscale[i]);
+            sum += freq[b] * (xscale[i + 1] - xscale[i]);
         else
         {
             if (a > 0)
-                n += freq[a - 1] * (a - xscale[i]);
+                sum += freq[a - 1] * (a - xscale[i]);
             for (; a < b; a ++)
-                n += freq[a];
+                sum += freq[a];
             if (b < 256)
-                n += freq[b] * (xscale[i + 1] - b);
+                sum += freq[b] * (xscale[i + 1] - b);
         }
 
-	heights[pos][i] = log10 (1 + n * 50);// / 2.0f;
+        /* fudge factor to make the graph have the same overall height as a
+           12-band one no matter how many bands there are */
+        sum = sum * bands / 12;
+
+        /* convert to dB */
+        gfloat val = 20 * log10f (sum);
+
+        /* scale (-db_range, 0.0) to (0.0, 1.0) */
+        val = (1.0 + val / db_range);
            
+        graph[i] = CLAMP (val, 0, 1);
     }
+}
+
+static void render_cb (gfloat * freq)
+{
+
+    make_log_graph (freq, NUM_BANDS, 40, heights[pos]);
 
     pos = (pos + 1) % NUM_BANDS;
     gtk_widget_queue_draw (spect_widget);
@@ -289,20 +320,17 @@ static /* GtkWidget * */ gpointer get_widget(void)
     GLfloat b_base, r_base;
     for (int y = 0; y < NUM_BANDS; y++)
     {
-        b_base = (gfloat)y / ((gfloat)(NUM_BANDS -1) * 2);
-        r_base = 0.5f - b_base;
+        b_base = (gfloat)y / (gfloat)(NUM_BANDS -1);
+        r_base = 1.0f - b_base;
 
         for (int x = 0; x < NUM_BANDS; x++)
         {
             heights[x][y] = 0.0f;
             colors[x][y][0] = r_base - ( (gfloat)x * (r_base / (gfloat)(NUM_BANDS - 1)) );
-            colors[x][y][1] = (gfloat)x / ( (gfloat)(NUM_BANDS - 1) * 2);
+            colors[x][y][1] = (gfloat)x / (gfloat)(NUM_BANDS - 1);
             colors[x][y][2] = b_base;
         }
     }
-
-    for (int i = 0; i <= NUM_BANDS; i++)
-        xscale[i] = powf(257.0f, ((gfloat)i / (gfloat)NUM_BANDS)) - 1.0f;
 
     y_speed = 0.058f;
     y_angle = 5.0f;
