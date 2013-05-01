@@ -187,7 +187,7 @@ static void draw_visualizer (GtkWidget *widget, cairo_t *cr)
     glMatrixMode (GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glFrustum (-1, 1, -1, 1, 1.5, 10 );
+    glFrustum (-1.1, 1, -1.5, 1, 2, 10 );
     glMatrixMode (GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
