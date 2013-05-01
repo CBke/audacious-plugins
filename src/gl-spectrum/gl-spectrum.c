@@ -167,7 +167,7 @@ static void render_cb (gfloat * freq)
            
     }
 
-    pos = ++pos % NUM_BANDS;
+    pos = (pos + 1) % NUM_BANDS;
     gtk_widget_queue_draw (spect_widget);
 
 }
@@ -289,14 +289,14 @@ static /* GtkWidget * */ gpointer get_widget(void)
     GLfloat b_base, r_base;
     for (int y = 0; y < NUM_BANDS; y++)
     {
-        b_base = (gfloat)y / (gfloat)(NUM_BANDS -1);
-        r_base = 1.0f - b_base;
+        b_base = (gfloat)y / ((gfloat)(NUM_BANDS -1) * 2);
+        r_base = 0.5f - b_base;
 
         for (int x = 0; x < NUM_BANDS; x++)
         {
             heights[x][y] = 0.0f;
             colors[x][y][0] = r_base - ( (gfloat)x * (r_base / (gfloat)(NUM_BANDS - 1)) );
-            colors[x][y][1] = (gfloat)x / (gfloat)(NUM_BANDS - 1);
+            colors[x][y][1] = (gfloat)x / ( (gfloat)(NUM_BANDS - 1) * 2);
             colors[x][y][2] = b_base;
         }
     }
